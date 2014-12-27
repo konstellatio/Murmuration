@@ -1,11 +1,13 @@
-var egBird = {
-    position: [100, 200],
-    velocity: [10, 10]
-}
+// Constants
 var leftWing = [-10, -3];
 var rightWing = [10, -3];
 
-function moveBird(bird) {
+// Birds
+var egBird = {
+    position: [100, 200],
+    velocity: [10, 10]
+};
+function moveBird(bird, dt) {
 }
 function rotate(vec, angle) {
     var cosA = Math.cos(angle);
@@ -29,6 +31,11 @@ function drawBird(bird, c) {
     c.stroke();
 }
 
+// Flocking
+
+
+// App
+var frameRate = 10;
 function draw() {
     var canvas = $(".maindisplay");
     var w = canvas.width();
@@ -40,6 +47,7 @@ function draw() {
     c.fillStyle = "#80A0FF";
     c.fillRect(0, 0, w, h);
 
+    moveBird(egBird, 1.0/frameRate);
     drawBird(egBird, c);
 }
 
@@ -47,5 +55,5 @@ $(function() {
     draw();
     window.setInterval(function () {
 	draw();
-    }, 100);
+    }, 1000.0 / frameRate);
 });
