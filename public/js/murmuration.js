@@ -16,8 +16,8 @@ function rotate(vec, angle) {
     var cosA = Math.cos(angle);
     var sinA = Math.sin(angle);
     return [
-	cosA * vec[0] - sinA * vec[1],
-	sinA * vec[0] + cosA * vec[1]
+        cosA * vec[0] - sinA * vec[1],
+        sinA * vec[0] + cosA * vec[1]
     ];
 }
 function drawBird(bird, c) {
@@ -37,17 +37,17 @@ function drawBird(bird, c) {
 function randomBirds(n, w, h) {
     var birds = [];
     for (var i = 0; i < n; ++i) {
-	var orientation = Math.random() * 2 * Math.PI;
-	birds.push({
-	    position: [
-		w * Math.random(),
-		h * Math.random()
-	    ],
-	    velocity: [
-		initialVelocity * Math.cos(orientation),
-		initialVelocity * Math.sin(orientation)
-	    ]
-	});
+        var orientation = Math.random() * 2 * Math.PI;
+        birds.push({
+            position: [
+                w * Math.random(),
+                h * Math.random()
+            ],
+            velocity: [
+                initialVelocity * Math.cos(orientation),
+                initialVelocity * Math.sin(orientation)
+            ]
+        });
     }
     return birds;
 }
@@ -70,8 +70,8 @@ function draw() {
     c.fillRect(0, 0, w, h);
 
     birds.forEach(function (bird) {
-	moveBird(bird, 1.0/frameRate);
-	drawBird(bird, c);
+        moveBird(bird, 1.0/frameRate);
+        drawBird(bird, c);
     });
 }
 
@@ -80,10 +80,9 @@ $(function() {
     var w = canvas.width();
     var h = canvas.height();
     birds = randomBirds(100, w, h);
-    console.log("Set birds to " + birds);
 
     draw();
     window.setInterval(function () {
-	draw();
+        draw();
     }, 1000.0 / frameRate);
 });
