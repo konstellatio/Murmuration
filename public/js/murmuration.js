@@ -2,6 +2,7 @@
 var leftWing = [-10, -3];
 var rightWing = [10, -3];
 var initialVelocity = 20;
+var dampingFactor = 0.0001;
 var cohesionPower = 1;
 var cohesionScale = 1;
 
@@ -72,9 +73,11 @@ function draw() {
     c.fillRect(0, 0, w, h);
 
     birds.forEach(function (bird) {
-        cohesion(bird,birds,1.0/frameRate)
-        moveBird(bird, 1.0/frameRate);
-        avoidWall(bird,w,h)
+        var dt = 1.0/frameRate;
+        cohesion(bird, birds, dt);
+        damping(bird, dt);
+        avoidWall(bird, w, h);
+        moveBird(bird, dt);
         drawBird(bird, c);
     });
 }
@@ -90,6 +93,14 @@ $(function() {
         draw();
     }, 1000.0 / frameRate);
 });
+
+function damping(bird, timestep) {
+    var dx = bird.velocity[0];
+    var dy = bird.velocity[1];
+    var step = timestep * dampingFactor * (dx*dx + dy*dy);
+    bird.velocity[0] -= step * Math.sign(dx);
+    bird.velocity[1] -= step * Math.sign(dy);
+}
 
 function cohesion(bird,others,timestep) {
     var x = 0;
