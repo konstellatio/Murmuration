@@ -1,12 +1,16 @@
 // Constants
+var nBirds = 100;
 var leftWing = [-10, -3];
 var rightWing = [10, -3];
+
 var initialVelocity = 20;
-var dampingFactor = 0.001;
-var cohesionPower = 0.1;
-var cohesionScale = 0.001;
-var separationScale = 0.0005;
-var separationPower = 0.1;
+var dampingFactor = 0.01;
+var forecastScale = 1;
+var cohesionPower = 1;
+var cohesionScale = 0.5;
+var separationPower = -2;
+var separationScale = 1e6;
+var minSeparation = 1;
 var alignmentScale = 1;
 
 // Birds
@@ -59,33 +63,76 @@ function randomBirds(n, w, h) {
 }
 
 // Flocking
+function powerLawUpdate(scale, power, minMagnitude, dx, dy, velocity) {
+    var magnitude = Math.max(Math.sqrt(dx*dx + dy*dy), minMagnitude);
+    var s = scale * Math.pow(magnitude, power-1);
+    velocity[0] += s * dx;
+    velocity[1] += s * dy;
+}
+
+function separation(bird,others,timestep) {
+    others.forEach(function (otherBird) {
+        if (bird != otherBird) {
+            var dx = bird.position[0] - otherBird.position[0];
+            var dy = bird.position[1] - otherBird.position[1];
+            powerLawUpdate(separationScale * timestep / others.length, separationPower, minSeparation, dx, dy, bird.velocity);
+        }
+    });
+}
+
+function damping(bird, timestep) {
+    var dx = bird.velocity[0];
+    var dy = bird.velocity[1];
+    var step = timestep * dampingFactor * (dx*dx + dy*dy);
+    bird.velocity[0] -= step * Math.sign(dx);
+    bird.velocity[1] -= step * Math.sign(dy);
+}
+
 function cohesion(bird,others,timestep) {
     var x = 0;
     var y = 0;
     others.forEach(function (bird) {
         x += bird.position[0];
         y += bird.position[1];
-    })
+    });
     x /= others.length;
     y /= others.length;
     var dx = x - bird.position[0];
     var dy = y - bird.position[1];
-    var scale = cohesionScale/Math.pow(dx*dx + dy*dy,(cohesionPower-1)/2);
-    bird.velocity[0] += timestep * scale * dx;
-    bird.velocity[1] += timestep * scale * dy;
+    powerLawUpdate(cohesionScale * timestep, cohesionPower, 0, dx, dy, bird.velocity);
 }
 
-function separation(bird,others,timestep) {
-    others.forEach(function (otherBird) {
-        var dx = bird.position[0] - otherBird.position[0];
-        var dy = bird.position[1] - otherBird.position[1];
-        var scale = separationScale/Math.pow(dx*dx + dy*dy,(separationPower-1)/2);
-        var xvel = timestep * scale * dx;
-        var yvel = timestep * scale * dy;
-        bird.velocity[0] += xvel / others.length;
-        bird.velocity[1] += yvel / others.length;
-    })
-    
+function cohesionWithForecast(bird,others,timestep) {
+    var x = 0;
+    var y = 0;
+    var vx = 0;
+    var vy = 0;
+    others.forEach(function (bird) {
+        x += bird.position[0];
+        vx += bird.velocity[0];
+        y += bird.position[1];
+        vy += bird.velocity[1];
+    });
+    x /= others.length;
+    vx /= others.length;
+    y /= others.length;
+    vy /= others.length;
+    var dx = x + forecastScale * vx - bird.position[0];
+    var dy = y + forecastScale * vy - bird.position[1];
+    powerLawUpdate(cohesionScale * timestep, cohesionPower, 0, dx, dy, bird.velocity);
+}
+
+function avoidWall(bird, width, height) {
+    var x = bird.position[0];
+    var y = bird.position[1];
+    var xinc = bird.velocity[0];
+    var yinc = bird.velocity[1];
+    if((xinc<0 && x <= 0) || (xinc>0 && x >= width)) {
+        bird.velocity[0] *= -1;
+    }
+    if((yinc<0 && y <= 0) || (yinc>0 && y >= height)) {
+        bird.velocity[1] *= -1;
+    }
 }
 
 function alignment(bird,others,timestep) {
@@ -132,31 +179,10 @@ $(function() {
     var canvas = $(".maindisplay");
     var w = canvas.width();
     var h = canvas.height();
-    birds = randomBirds(100, w, h);
+    birds = randomBirds(nBirds, w, h);
 
     draw();
     window.setInterval(function () {
         draw();
     }, 1000.0 / frameRate);
 });
-
-function damping(bird, timestep) {
-    var dx = bird.velocity[0];
-    var dy = bird.velocity[1];
-    var step = timestep * dampingFactor * (dx*dx + dy*dy);
-    bird.velocity[0] -= step * Math.sign(dx);
-    bird.velocity[1] -= step * Math.sign(dy);
-}
-
-function avoidWall(bird, width, height) {
-    var x = bird.position[0];
-    var y = bird.position[1];
-    var xinc = bird.velocity[0];
-    var yinc = bird.velocity[1];
-    if((xinc<0 && x <= 0) || (xinc>0 && x >= width)) {
-        bird.velocity[0] *= -1;
-    }
-    if((yinc<0 && y <= 0) || (yinc>0 && y >= height)) {
-        bird.velocity[1] *= -1;
-    }
-}
