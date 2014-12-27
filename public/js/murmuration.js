@@ -1,6 +1,7 @@
 // Constants
 var leftWing = [-10, -3];
 var rightWing = [10, -3];
+var initialVelocity = 20;
 
 // Birds
 var egBird = {
@@ -8,6 +9,8 @@ var egBird = {
     velocity: [10, 10]
 };
 function moveBird(bird, dt) {
+    bird.position[0] += bird.velocity[0] * dt;
+    bird.position[1] += bird.velocity[1] * dt;
 }
 function rotate(vec, angle) {
     var cosA = Math.cos(angle);
@@ -25,10 +28,28 @@ function drawBird(bird, c) {
     var left = rotate(leftWing, a);
     var right = rotate(rightWing, a);
 
+    c.lineWidth = "3";
     c.moveTo(ox + left[0], oy + left[1]);
     c.lineTo(ox, oy);
     c.lineTo(ox + right[0], oy + right[1]);
     c.stroke();
+}
+function randomBirds(n, w, h) {
+    var birds = [];
+    for (var i = 0; i < n; ++i) {
+	var orientation = Math.random() * 2 * Math.PI;
+	birds.push({
+	    position: [
+		w * Math.random(),
+		h * Math.random()
+	    ],
+	    velocity: [
+		initialVelocity * Math.cos(orientation),
+		initialVelocity * Math.sin(orientation)
+	    ]
+	});
+    }
+    return birds;
 }
 
 // Flocking
@@ -36,6 +57,7 @@ function drawBird(bird, c) {
 
 // App
 var frameRate = 10;
+var birds = null;
 function draw() {
     var canvas = $(".maindisplay");
     var w = canvas.width();
@@ -47,11 +69,19 @@ function draw() {
     c.fillStyle = "#80A0FF";
     c.fillRect(0, 0, w, h);
 
-    moveBird(egBird, 1.0/frameRate);
-    drawBird(egBird, c);
+    birds.forEach(function (bird) {
+	moveBird(bird, 1.0/frameRate);
+	drawBird(bird, c);
+    });
 }
 
 $(function() {
+    var canvas = $(".maindisplay");
+    var w = canvas.width();
+    var h = canvas.height();
+    birds = randomBirds(100, w, h);
+    console.log("Set birds to " + birds);
+
     draw();
     window.setInterval(function () {
 	draw();
