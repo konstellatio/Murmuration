@@ -5,7 +5,7 @@ var rightWing = [10, -3];
 
 var initialVelocity = 20;
 var dampingFactor = 0.01;
-var forecastScale = 1;
+var forecastScale = 2;
 var cohesionPower = 1;
 var cohesionScale = 0.5;
 var separationPower = -2;
@@ -83,9 +83,9 @@ function separation(bird,others,timestep) {
 function damping(bird, timestep) {
     var dx = bird.velocity[0];
     var dy = bird.velocity[1];
-    var step = timestep * dampingFactor * (dx*dx + dy*dy);
-    bird.velocity[0] -= step * Math.sign(dx);
-    bird.velocity[1] -= step * Math.sign(dy);
+    var step = timestep * dampingFactor * Math.sqrt(dx*dx + dy*dy);
+    bird.velocity[0] -= step * dx;
+    bird.velocity[1] -= step * dy;
 }
 
 function cohesion(bird,others,timestep) {
@@ -138,19 +138,18 @@ function avoidWall(bird, width, height) {
 function alignment(bird,others,timestep) {
     var x = 0;
     var y = 0;
-    others.forEach(function (bird) {
-        x += bird.velocity[0];
-        y += bird.velocity[1];
+    others.forEach(function (other) {
+        x += other.velocity[0];
+        y += other.velocity[1];
     })
     x /= others.length;
     y /= others.length;
-    //var scale = alignmentScale/Math.pow(x*x + y*y,(alignmentPower-1)/2);
     bird.velocity[0] += timestep * alignmentScale * x;
     bird.velocity[1] += timestep * alignmentScale * y;
 }
 
 // App
-var frameRate = 10;
+var frameRate = 30;
 var birds = null;
 function draw() {
     var canvas = $(".maindisplay");
@@ -163,13 +162,15 @@ function draw() {
     c.fillStyle = "#80A0FF";
     c.fillRect(0, 0, w, h);
 
+    var dt = 1.0/frameRate;
     birds.forEach(function (bird) {
-        var dt = 1.0/frameRate;
         cohesion(bird, birds, dt);
-        separation(bird,birds,dt)
-        alignment(bird,birds,dt)
+        separation(bird, birds, dt);
+        alignment(bird, birds, dt);
         damping(bird, dt);
         avoidWall(bird, w, h);
+    });
+    birds.forEach(function (bird) {
         moveBird(bird, dt);
         drawBird(bird, c);
     });
