@@ -71,6 +71,7 @@ function draw() {
 
     birds.forEach(function (bird) {
         moveBird(bird, 1.0/frameRate);
+        avoidWall(bird,w,h)
         drawBird(bird, c);
     });
 }
@@ -86,3 +87,16 @@ $(function() {
         draw();
     }, 1000.0 / frameRate);
 });
+
+function avoidWall(bird, width, height) {
+    var x = bird.position[0];
+    var y = bird.position[1];
+    var xinc = bird.velocity[0];
+    var yinc = bird.velocity[1];
+    if((xinc<0 && x <= 0) || (xinc>0 && x >= width)) {
+        bird.velocity[0] *= -1;
+    }
+    if((yinc<0 && y <= 0) || (yinc>0 && y >= height)) {
+        bird.velocity[1] *= -1;
+    }
+}
