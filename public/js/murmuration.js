@@ -2,9 +2,11 @@
 var leftWing = [-10, -3];
 var rightWing = [10, -3];
 var initialVelocity = 20;
-var dampingFactor = 0.0001;
-var cohesionPower = 1;
-var cohesionScale = 1;
+var dampingFactor = 0;//.0001;
+var cohesionPower = 0.1;
+var cohesionScale = 0.001;
+var separationScale = 0.0005;
+var separationPower = 0.1;
 
 // Birds
 var egBird = {
@@ -56,7 +58,36 @@ function randomBirds(n, w, h) {
 }
 
 // Flocking
+function cohesion(bird,others,timestep) {
+    var x = 0;
+    var y = 0;
+    others.forEach(function (bird) {
+        x += bird.position[0];
+        y += bird.position[1];
+    })
+    x /= others.length;
+    y /= others.length;
+    var dx = x - bird.position[0];
+    var dy = y - bird.position[1];
+    var scale = cohesionScale/Math.pow(dx*dx + dy*dy,(cohesionPower-1)/2);
+    bird.velocity[0] += timestep * scale * dx;
+    bird.velocity[1] += timestep * scale * dy;
+}
 
+function separation(bird,others,timestep) {
+    //var xvel = 0;
+    //var yvel = 0;
+    others.forEach(function (otherBird) {
+        var dx = bird.position[0] - otherBird.position[0];
+        var dy = bird.position[1] - otherBird.position[1];
+        var scale = separationScale/Math.pow(dx*dx + dy*dy,(separationPower-1)/2);
+        var xvel = timestep * scale * dx;
+        var yvel = timestep * scale * dy;
+        bird.velocity[0] += xvel / others.length;
+        bird.velocity[1] += yvel / others.length;
+    })
+    
+}
 
 // App
 var frameRate = 10;
@@ -75,6 +106,7 @@ function draw() {
     birds.forEach(function (bird) {
         var dt = 1.0/frameRate;
         cohesion(bird, birds, dt);
+        separation(bird,birds,dt)
         damping(bird, dt);
         avoidWall(bird, w, h);
         moveBird(bird, dt);
@@ -100,22 +132,6 @@ function damping(bird, timestep) {
     var step = timestep * dampingFactor * (dx*dx + dy*dy);
     bird.velocity[0] -= step * Math.sign(dx);
     bird.velocity[1] -= step * Math.sign(dy);
-}
-
-function cohesion(bird,others,timestep) {
-    var x = 0;
-    var y = 0;
-    others.forEach(function (bird) {
-        x += bird.position[0];
-        y += bird.position[1];
-    })
-    x /= others.length;
-    y /= others.length;
-    var dx = x - bird.position[0];
-    var dy = y - bird.position[1];
-    var scale = cohesionScale/Math.pow(dx*dx + dy*dy,(cohesionPower-1)/2);
-    bird.velocity[0] += timestep * scale * dx;
-    bird.velocity[1] += timestep * scale * dy;
 }
 
 function avoidWall(bird, width, height) {
